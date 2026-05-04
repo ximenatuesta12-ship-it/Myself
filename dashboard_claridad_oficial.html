@@ -1,0 +1,783 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <!-- Ajustado para evitar que la pantalla haga zoom accidentalmente, como en las apps reales -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Tu Espacio de Claridad y Enfoque</title>
+    
+    <!-- NUEVO: Etiquetas para que se comporte como App en el celular -->
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="theme-color" content="#0d9488"> <!-- Color de la barra de estado superior (Teal 600) -->
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chosen Palette: Warm Neutrals & Calming Accents (Stone, Teal, Warm Sand) -->
+    <!-- Application Structure Plan: A tabbed, dashboard-style interface designed to prevent cognitive overload. Sections: 1. Diagnóstico (Validates feelings, introduces vocabulary shift), 2. Balance (Visualizes current vs ideal state), 3. Horario (The "Unschedule" technique adapted), 4. Desarmar Miedos (Interactive cognitive reframing), 5. Plan de Acción (Actionable, start-focused tasks with a focus timer). -->
+    <!-- Visualization & Content Choices: 
+         - Goal: Organize without anxiety -> Viz: CSS Grid Schedule -> Interaction: AI generates schedule based on leisure first.
+         - Goal: Change/Progress -> Viz: Interactive Checklist & Focus Timer -> Interaction: Start timer, check off blocks. NO SVG.
+    -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600&family=Lora:ital@0;1&display=swap');
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FAFAF9; /* stone-50 */
+            color: #292524; /* stone-800 */
+        }
+        
+        h1, h2, h3, .serif-text {
+            font-family: 'Lora', serif;
+        }
+
+        /* Chart Container Styling - CRITICAL REQUIREMENT */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+            height: 350px;
+            max-height: 400px;
+        }
+        
+        @media (max-width: 640px) {
+            .chart-container {
+                height: 300px;
+            }
+        }
+
+        .tab-content {
+            display: none;
+            animation: fadeIn 0.4s ease-in-out;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            transition: all 0.3s ease;
+        }
+    </style>
+</head>
+<body class="min-h-screen text-stone-800 antialiased selection:bg-teal-200 selection:text-teal-900">
+
+    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Header -->
+        <header class="mb-10 text-center sm:text-left flex flex-col sm:flex-row justify-between items-center gap-6">
+            <div>
+                <h1 class="text-3xl sm:text-4xl font-semibold text-stone-900 mb-2">Tu Espacio de Claridad</h1>
+                <p class="text-stone-500 text-lg">Un paso a la vez hacia tu mejor versión y estabilidad financiera.</p>
+            </div>
+            <div class="bg-white p-4 rounded-2xl shadow-sm border border-stone-100 flex items-center gap-4">
+                <div class="text-2xl">🌱</div>
+                <div>
+                    <p class="text-xs text-stone-400 font-semibold uppercase tracking-wider">Mantra de Hoy</p>
+                    <p class="text-teal-700 font-medium">"Solo tengo que empezar"</p>
+                </div>
+            </div>
+        </header>
+
+        <!-- Navigation Tabs -->
+        <nav class="flex overflow-x-auto gap-2 mb-8 pb-2 scrollbar-hide border-b border-stone-200">
+            <button onclick="openTab('tab-diagnostico', this)" class="tab-btn active px-5 py-3 rounded-t-lg bg-teal-600 text-white font-medium text-sm transition-colors whitespace-nowrap">1. Diagnóstico</button>
+            <button onclick="openTab('tab-balance', this)" class="tab-btn px-5 py-3 rounded-t-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 font-medium text-sm transition-colors whitespace-nowrap">2. Tu Balance</button>
+            <button onclick="openTab('tab-horario', this)" class="tab-btn px-5 py-3 rounded-t-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 font-medium text-sm transition-colors whitespace-nowrap">3. Diseño de Rutina</button>
+            <button onclick="openTab('tab-miedos', this)" class="tab-btn px-5 py-3 rounded-t-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 font-medium text-sm transition-colors whitespace-nowrap">4. Miedos y Creencias</button>
+            <button onclick="openTab('tab-accion', this)" class="tab-btn px-5 py-3 rounded-t-lg text-stone-500 hover:text-stone-800 hover:bg-stone-100 font-medium text-sm transition-colors whitespace-nowrap">5. Plan de Acción</button>
+        </nav>
+
+        <main class="bg-white rounded-3xl shadow-sm border border-stone-100 p-6 sm:p-10 min-h-[60vh]">
+            
+            <!-- TAB 1: DIAGNÓSTICO -->
+            <section id="tab-diagnostico" class="tab-content active">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-2xl text-teal-800 mb-4">Entendiendo cómo funciona tu energía</h2>
+                    <p class="mb-6 text-stone-600 leading-relaxed text-lg">
+                        Es fundamental entender algo liberador: **la procrastinación y la evasión no son defectos de carácter.** A menudo, son mecanismos de defensa que usa tu cerebro cuando se siente abrumado por la ansiedad, el exceso de tareas o el miedo a no hacerlo perfecto.
+                    </p>
+                    
+                    <!-- Vocabulary Shift -->
+                    <div class="bg-indigo-50 border border-indigo-100 p-6 rounded-2xl mb-8 shadow-sm">
+                        <h3 class="text-indigo-900 font-semibold mb-4 flex items-center gap-2 text-lg"><span>🗣️</span> El Poder de tus Palabras</h3>
+                        <p class="text-sm text-indigo-800 mb-4">La forma en que te hablas a ti misma puede generar ansiedad innecesaria. Modifica estos diálogos internos hoy mismo. Toca las tarjetas para darles la vuelta y cambiar la perspectiva:</p>
+                        
+                        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div onclick="this.querySelector('.inner').classList.toggle('rotate-y-180')" class="perspective-1000 cursor-pointer h-32 w-full">
+                                <div class="inner relative w-full h-full transition-transform duration-500 transform-style-3d">
+                                    <div class="absolute w-full h-full bg-white border border-rose-200 rounded-xl flex items-center justify-center p-4 text-center text-rose-800 font-medium shadow-sm backface-hidden">
+                                        "Tengo que..."<br><span class="text-xs font-normal mt-1">(Suena a obligación pesada)</span>
+                                    </div>
+                                    <div class="absolute w-full h-full bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center p-4 text-center text-emerald-800 font-medium shadow-sm backface-hidden rotate-y-180">
+                                        "Elijo..."<br><span class="text-xs font-normal mt-1">(Tú tienes el control)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div onclick="this.querySelector('.inner').classList.toggle('rotate-y-180')" class="perspective-1000 cursor-pointer h-32 w-full">
+                                <div class="inner relative w-full h-full transition-transform duration-500 transform-style-3d">
+                                    <div class="absolute w-full h-full bg-white border border-rose-200 rounded-xl flex items-center justify-center p-4 text-center text-rose-800 font-medium shadow-sm backface-hidden">
+                                        "Debo terminar esto"<br><span class="text-xs font-normal mt-1">(Paraliza por la magnitud)</span>
+                                    </div>
+                                    <div class="absolute w-full h-full bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center p-4 text-center text-emerald-800 font-medium shadow-sm backface-hidden rotate-y-180">
+                                        "¿Cuándo voy a empezar?"<br><span class="text-xs font-normal mt-1">(Solo concéntrate en arrancar)</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div onclick="this.querySelector('.inner').classList.toggle('rotate-y-180')" class="perspective-1000 cursor-pointer h-32 w-full">
+                                <div class="inner relative w-full h-full transition-transform duration-500 transform-style-3d">
+                                    <div class="absolute w-full h-full bg-white border border-rose-200 rounded-xl flex items-center justify-center p-4 text-center text-rose-800 font-medium shadow-sm backface-hidden">
+                                        "Tiene que ser perfecto"<br><span class="text-xs font-normal mt-1">(Genera miedo al fracaso)</span>
+                                    </div>
+                                    <div class="absolute w-full h-full bg-emerald-50 border border-emerald-200 rounded-xl flex items-center justify-center p-4 text-center text-emerald-800 font-medium shadow-sm backface-hidden rotate-y-180">
+                                        "Avanzar es mejor que la perfección"<br><span class="text-xs font-normal mt-1">(Permítete cometer errores)</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <style>
+                            .perspective-1000 { perspective: 1000px; }
+                            .transform-style-3d { transform-style: preserve-3d; }
+                            .backface-hidden { backface-visibility: hidden; }
+                            .rotate-y-180 { transform: rotateY(180deg); }
+                        </style>
+                    </div>
+
+                    <!-- Brain Dump -->
+                    <div class="bg-white border border-stone-200 p-6 rounded-2xl shadow-sm">
+                        <h3 class="text-stone-800 font-semibold mb-2 flex items-center gap-2"><span>🌪️</span> Descarga Mental (Brain Dump)</h3>
+                        <p class="text-sm text-stone-600 mb-4">La ansiedad disminuye cuando externalizas el caos. Escribe todo lo que tienes pendiente y la IA te ayudará a priorizar con qué pequeño paso arrancar.</p>
+                        <textarea id="braindump-input" rows="3" class="w-full px-4 py-3 border border-stone-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-teal-500 text-sm mb-3" placeholder="Todo lo que ronda mi cabeza (pagos, limpieza, proyectos, preocupaciones)..."></textarea>
+                        <button id="btn-braindump" onclick="sortBrainDump()" class="bg-stone-800 hover:bg-stone-900 text-white px-6 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm w-full sm:w-auto">✨ Organizar mis pensamientos</button>
+                        
+                        <div id="braindump-results" class="mt-6 hidden grid grid-cols-1 sm:grid-cols-3 gap-4">
+                            <div class="bg-teal-50 p-4 rounded-xl border border-teal-100">
+                                <h4 class="text-teal-800 font-semibold text-sm mb-2">🎯 Empieza hoy (Solo 15 min)</h4>
+                                <ul id="list-do-today" class="text-xs text-teal-700 space-y-1 list-disc pl-4"></ul>
+                            </div>
+                            <div class="bg-stone-50 p-4 rounded-xl border border-stone-200">
+                                <h4 class="text-stone-800 font-semibold text-sm mb-2">📅 Reprogramar sin culpa</h4>
+                                <ul id="list-postpone" class="text-xs text-stone-600 space-y-1 list-disc pl-4"></ul>
+                            </div>
+                            <div class="bg-orange-50 p-4 rounded-xl border border-orange-100">
+                                <h4 class="text-orange-800 font-semibold text-sm mb-2">🍃 Fuera de tu control (Suéltalo)</h4>
+                                <ul id="list-letgo" class="text-xs text-orange-700 space-y-1 list-disc pl-4"></ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 2: BALANCE -->
+            <section id="tab-balance" class="tab-content">
+                <div class="flex flex-col lg:flex-row gap-10 items-center">
+                    <div class="flex-1 w-full">
+                        <h2 class="text-2xl text-teal-800 mb-4">El Balance de tu Energía</h2>
+                        <p class="mb-6 text-stone-600">
+                            Para ser productivos y lograr nuestras metas, primero no debemos sentirnos privados de la vida. ¿Estás sacrificando tu tiempo de descanso o cuidado personal por la preocupación constante?
+                        </p>
+                        <!-- Diario de Victorias Ocultas -->
+                        <div class="mt-6 bg-indigo-50 border border-indigo-100 p-6 rounded-3xl w-full">
+                            <h3 class="text-indigo-800 font-semibold mb-2 flex items-center gap-2"><span>🏆</span> Diario de Victorias Ocultas</h3>
+                            <p class="text-sm text-indigo-700 mb-4">A veces sentimos que "no hicimos nada". Cuéntale a tu Coach IA lo que hiciste hoy (por más pequeño que parezca). Ella te ayudará a ver que tus esfuerzos son válidos y representan avances reales.</p>
+                            <textarea id="victories-input" rows="2" class="w-full px-4 py-3 border border-indigo-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-indigo-400 text-sm mb-3 bg-white"></textarea>
+                            <button id="btn-victories" onclick="findHiddenVictories()" class="bg-indigo-600 hover:bg-indigo-700 text-white px-6 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm">✨ Revelar mis logros de hoy</button>
+                            <div id="victories-results" class="mt-4 hidden"><ul id="list-victories" class="space-y-2"></ul></div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex-1 w-full bg-stone-50 p-6 rounded-3xl border border-stone-100 flex flex-col items-center justify-center">
+                        <div class="chart-container"><canvas id="balanceChart"></canvas></div>
+                        <div class="mt-6 w-full border-t border-stone-200 pt-6">
+                            <h3 class="text-teal-800 font-semibold mb-2 flex items-center gap-2 text-sm"><span>✨</span> Analizador de Energía Diaria</h3>
+                            <textarea id="daily-energy-input" rows="2" class="w-full px-3 py-2 border border-stone-200 rounded-lg text-xs mb-2" placeholder="Ej: Trabajé 8 horas, logré avanzar un poco, pero me sentí ansiosa en la tarde..."></textarea>
+                            <button onclick="analyzeEnergy()" id="btn-energy" class="bg-teal-50 hover:bg-teal-100 border border-teal-200 text-teal-700 px-4 py-2 rounded-lg text-xs font-medium w-full">✨ Actualizar mi Gráfico</button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 3: HORARIO (THE UNSCHEDULE APPROACH) -->
+            <section id="tab-horario" class="tab-content">
+                <div class="max-w-6xl mx-auto">
+                    <h2 class="text-2xl text-teal-800 mb-4">Diseño de una Rutina Amable</h2>
+                    <p class="mb-6 text-stone-600">
+                        <strong>Estrategia clave: Prioriza tu bienestar en tu agenda.</strong> Programa primero tus horas de sueño, comidas, tiempo libre, hobbies y obligaciones fijas. El trabajo enfocado en tus metas lo iremos encajando en los espacios libres restantes, en bloques cortos manejables.
+                    </p>
+
+                    <!-- AI Schedule Assistant -->
+                    <div class="bg-amber-50 border border-amber-100 p-6 rounded-2xl mb-8 shadow-sm">
+                        <h3 class="text-amber-900 font-semibold mb-3 flex items-center gap-2"><span>🗓️</span> Generador de Rutina Estructurada</h3>
+                        <p class="text-sm text-amber-800 mb-4">Dile a la IA: 1. A qué hora duermes y comes. 2. Tus hobbies o descansos deseados. 3. Tu horario laboral fijo. La IA armará una estructura visual para ti.</p>
+                        
+                        <div class="flex flex-col md:flex-row gap-4">
+                            <textarea id="schedule-input" rows="3" class="flex-1 px-4 py-3 border border-amber-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-amber-500 text-sm bg-white" placeholder="Ej: Duermo de 11pm a 7am. Trabajo de 9am a 5pm. Quiero 1 hora para caminar libre de culpa en la tarde y tiempo para leer en la noche."></textarea>
+                            <button id="btn-schedule" onclick="generateSchedule()" class="bg-amber-600 hover:bg-amber-700 text-white px-6 py-3 rounded-xl font-medium transition-colors shadow-sm self-end md:self-stretch flex items-center justify-center whitespace-nowrap min-w-[180px]">
+                                ✨ Generar Horario
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Visual Calendar Grid -->
+                    <div class="border border-stone-200 rounded-2xl overflow-hidden bg-white hidden" id="calendar-wrapper">
+                        <div class="overflow-x-auto">
+                            <div class="min-w-[800px] grid grid-cols-8 divide-x divide-y divide-stone-200 text-sm">
+                                <!-- Header Row -->
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center">Hora</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center">Lunes</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center">Martes</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center">Miércoles</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center">Jueves</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center">Viernes</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center text-amber-700 bg-amber-50">Sábado</div>
+                                <div class="bg-stone-50 p-3 font-semibold text-stone-600 text-center text-amber-700 bg-amber-50">Domingo</div>
+
+                                <!-- Time Slots Container -->
+                                <div id="calendar-grid" class="contents"></div>
+                            </div>
+                        </div>
+                        <div class="p-4 bg-stone-50 border-t border-stone-200 flex flex-wrap gap-4 items-center text-xs text-stone-500">
+                            <span class="flex items-center gap-1 font-semibold text-stone-700">Leyenda:</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-purple-200 inline-block"></span> Tiempo para ti / Descanso</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-stone-200 inline-block"></span> Rutina / Sueño</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded-full bg-blue-100 inline-block"></span> Obligaciones Fijas</span>
+                            <span class="flex items-center gap-1"><span class="w-3 h-3 rounded border border-dashed border-stone-400 bg-white inline-block"></span> Espacios Disponibles (Para tus bloques de enfoque)</span>
+                        </div>
+                    </div>
+
+                    <div id="calendar-placeholder" class="text-center py-16 border-2 border-dashed border-stone-200 rounded-2xl text-stone-400">
+                        <span class="text-4xl mb-3 block">🏝️</span>
+                        <p>Tu diseño de rutina aparecerá aquí.</p>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 4: MIEDOS Y CREENCIAS -->
+            <section id="tab-miedos" class="tab-content">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-2xl text-teal-800 mb-4">Desarmando el Miedo al Fracaso</h2>
+                    <p class="mb-8 text-stone-600 text-lg">
+                        Muchas veces posponemos porque atamos nuestro valor personal a los resultados de nuestro trabajo. Vamos a separar tu valía de tus tareas, y a cuestionar esos "peores escenarios" que te paralizan.
+                    </p>
+
+                    <!-- AI Fear Reframer -->
+                    <div class="mb-8 bg-stone-50 border border-stone-200 p-6 rounded-2xl shadow-inner">
+                        <h3 class="text-stone-800 font-semibold mb-3 flex items-center gap-2"><span>🧠</span> ¿Qué pensamiento te paraliza hoy?</h3>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="new-fear-input" placeholder="Ej: Me da miedo tomar una mala decisión financiera y arruinarlo todo..." class="flex-1 px-4 py-2 border border-stone-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-teal-500">
+                            <button id="btn-reframe" onclick="generateFearReality()" class="bg-stone-800 hover:bg-stone-900 text-white px-6 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm whitespace-nowrap">✨ Desarmar Creencia</button>
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-10" id="fears-container">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- NEW: AI Positive Visualization -->
+                    <div class="bg-emerald-50 border border-emerald-100 p-6 rounded-2xl shadow-sm">
+                        <h3 class="text-emerald-900 font-semibold mb-3 flex items-center gap-2"><span>🔮</span> ¿Y si todo sale bien? (Visualizador)</h3>
+                        <p class="text-sm text-emerald-800 mb-4">Tu cerebro es experto imaginando catástrofes. Dile a la IA qué paso vas a dar, y ella te describirá el <strong>mejor escenario posible</strong> para llenarte de motivación.</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="success-input" placeholder="Ej: Voy a revisar mis gastos mensuales de los últimos 3 meses..." class="flex-1 px-4 py-2 border border-emerald-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500">
+                            <button id="btn-success" onclick="visualizeSuccess()" class="bg-emerald-600 hover:bg-emerald-700 text-white px-6 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm whitespace-nowrap">✨ Visualizar el Éxito</button>
+                        </div>
+                        <div id="success-result" class="hidden mt-4 p-5 bg-white border border-emerald-200 rounded-xl text-emerald-900 text-sm italic shadow-inner leading-relaxed"></div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- TAB 5: PLAN DE ACCIÓN -->
+            <section id="tab-accion" class="tab-content">
+                <div class="max-w-4xl mx-auto">
+                    <h2 class="text-2xl text-teal-800 mb-4">La Regla de "Solo Empezar"</h2>
+                    <p class="mb-6 text-stone-600">
+                        No te abrumes pidiéndole a tu mente "terminar" un proyecto enorme. Tu objetivo es simplemente **iniciar durante 15 o 30 minutos ininterrumpidos**. Tras ese bloque, tienes permiso para detenerte.
+                    </p>
+
+                    <!-- NEW: Quick Decider -->
+                    <div class="mb-8 bg-blue-50 border border-blue-100 p-6 rounded-2xl shadow-sm">
+                        <h3 class="text-blue-900 font-semibold mb-2 flex items-center gap-2"><span>⚡</span> El Decisor Rápido</h3>
+                        <p class="text-sm text-blue-800 mb-4">¿Atrapada entre varias opciones sin saber por cuál empezar? Escríbelas separadas por comas. La IA tomará la decisión por ti para romper la parálisis.</p>
+                        <div class="flex flex-col sm:flex-row gap-3">
+                            <input type="text" id="decider-input" placeholder="Ej: Contestar correos, barrer la sala, revisar mi presupuesto..." class="flex-1 px-4 py-2 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-500">
+                            <button id="btn-decider" onclick="makeQuickDecision()" class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm whitespace-nowrap">✨ Elige por mí</button>
+                        </div>
+                        <div id="decider-result" class="hidden mt-4 p-4 bg-white border-l-4 border-blue-500 rounded-r-xl text-blue-900 text-sm shadow-sm font-medium"></div>
+                    </div>
+
+                    <div class="flex flex-col md:flex-row gap-6 mb-8">
+                        <!-- Timer Component -->
+                        <div class="bg-teal-600 text-white p-6 rounded-3xl shadow-lg flex-1 flex flex-col items-center justify-center">
+                            <h3 class="text-teal-100 font-medium mb-2 uppercase tracking-wide text-xs">Bloque de Enfoque</h3>
+                            <div id="timer-display" class="text-6xl font-bold mb-4 font-mono">15:00</div>
+                            <div class="flex gap-3">
+                                <button onclick="setTimer(15)" class="bg-teal-700 hover:bg-teal-800 px-4 py-1 rounded text-sm transition-colors">15 min</button>
+                                <button onclick="setTimer(30)" class="bg-teal-700 hover:bg-teal-800 px-4 py-1 rounded text-sm transition-colors">30 min</button>
+                            </div>
+                            <button id="btn-timer-start" onclick="toggleTimer()" class="mt-4 bg-white text-teal-800 hover:bg-teal-50 px-8 py-3 rounded-full font-bold transition-colors w-full shadow-md">
+                                ▶ Empezar Bloque
+                            </button>
+                        </div>
+
+                        <!-- AI Micro-task Generator -->
+                        <div class="bg-stone-50 border border-stone-200 p-6 rounded-3xl flex-1">
+                            <h3 class="text-stone-800 font-semibold mb-2">✨ ¿En qué te vas a enfocar ahora?</h3>
+                            <p class="text-sm text-stone-500 mb-4">Ingresa tu meta y la IA te sugerirá 3 pasos minúsculos para ocupar tu próximo bloque de tiempo sin abrumarte.</p>
+                            <input type="text" id="new-goal-input" placeholder="Ej: Mejorar mi organización financiera" class="w-full px-4 py-2 border border-stone-300 rounded-lg text-sm mb-3">
+                            <button id="btn-microtasks" onclick="generateMicroTasks()" class="w-full bg-stone-800 hover:bg-stone-900 text-white px-4 py-2 rounded-lg font-medium transition-colors text-sm shadow-sm">
+                                ✨ Sugerir primeros pasos
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Progress Bar (Only tracking the small blocks) -->
+                    <div class="mb-6">
+                        <div class="flex justify-between text-sm mb-2 font-medium text-stone-600">
+                            <span>Bloques completados hoy</span>
+                            <span id="progress-text">0/3</span>
+                        </div>
+                        <div class="w-full bg-stone-100 rounded-full h-3">
+                            <div id="progress-bar" class="bg-teal-500 h-3 rounded-full transition-all duration-500" style="width: 0%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Task List -->
+                    <div class="space-y-3" id="task-list">
+                        <!-- Populated by JS -->
+                    </div>
+
+                    <!-- Negotiator (SOS) -->
+                    <div class="mt-10 bg-orange-50 border border-orange-100 p-6 rounded-2xl relative">
+                        <h3 class="text-orange-800 font-semibold mb-3 flex items-center gap-2"><span>🚨</span> Alternativas a la Procrastinación</h3>
+                        <p class="text-sm text-stone-700 mb-4">¿El impulso de posponer o evadir tareas es muy fuerte? Describe qué sientes y tu asistente te sugerirá una opción de descanso más saludable.</p>
+                        <div class="flex gap-3">
+                            <input type="text" id="negotiator-input" placeholder="Ej: Siento que no estoy avanzando y quiero revisar el celular..." class="flex-1 px-4 py-2 border border-orange-200 rounded-lg text-sm">
+                            <button id="btn-negotiator" onclick="negotiateDistraction()" class="bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium text-sm whitespace-nowrap">✨ Buscar alternativa</button>
+                        </div>
+                        <div id="negotiator-result" class="hidden mt-4 p-4 bg-white border border-orange-200 rounded-xl text-orange-900 text-sm italic"></div>
+                        
+                        <button onclick="playSOSAudio()" id="btn-sos-audio" class="mt-4 w-full bg-white border border-orange-300 hover:bg-orange-100 text-orange-800 py-2 rounded-xl transition-colors text-sm font-semibold flex justify-center items-center gap-2">
+                            <span>🎙️</span> Escuchar mensaje de calma
+                        </button>
+                        <audio id="sos-audio-player" class="hidden mt-2 w-full outline-none" controls></audio>
+                    </div>
+
+                </div>
+            </section>
+
+        </main>
+    </div>
+
+    <script>
+        // --- 1. Tab Navigation Logic ---
+        function openTab(tabId, btnElement) {
+            document.querySelectorAll('.tab-content').forEach(tab => tab.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-teal-600', 'text-white');
+                btn.classList.add('text-stone-500');
+            });
+            document.getElementById(tabId).classList.add('active');
+            btnElement.classList.remove('text-stone-500');
+            btnElement.classList.add('bg-teal-600', 'text-white');
+
+            if(tabId === 'tab-balance' && !window.radarChartInit) {
+                initRadarChart();
+                window.radarChartInit = true;
+            }
+        }
+
+        // --- 2. Timer Logic ---
+        let timerInterval;
+        let timeLeft = 15 * 60;
+        let isRunning = false;
+        
+        function setTimer(minutes) {
+            clearInterval(timerInterval);
+            isRunning = false;
+            timeLeft = minutes * 60;
+            updateTimerDisplay();
+            document.getElementById('btn-timer-start').innerHTML = '▶ Empezar Bloque';
+            document.getElementById('btn-timer-start').classList.remove('bg-rose-100', 'text-rose-800');
+        }
+
+        function updateTimerDisplay() {
+            const m = Math.floor(timeLeft / 60).toString().padStart(2, '0');
+            const s = (timeLeft % 60).toString().padStart(2, '0');
+            document.getElementById('timer-display').innerText = `${m}:${s}`;
+        }
+
+        function toggleTimer() {
+            const btn = document.getElementById('btn-timer-start');
+            if (isRunning) {
+                clearInterval(timerInterval);
+                isRunning = false;
+                btn.innerHTML = '▶ Continuar';
+                btn.classList.remove('bg-rose-100', 'text-rose-800');
+            } else {
+                isRunning = true;
+                btn.innerHTML = '⏸ Pausar';
+                btn.classList.add('bg-rose-100', 'text-rose-800');
+                timerInterval = setInterval(() => {
+                    timeLeft--;
+                    updateTimerDisplay();
+                    if (timeLeft <= 0) {
+                        clearInterval(timerInterval);
+                        isRunning = false;
+                        alert("¡Tiempo cumplido! Detente. Has logrado un bloque de enfoque. Recuerda tomar un descanso adecuado.");
+                        setTimer(15);
+                    }
+                }, 1000);
+            }
+        }
+
+        // --- 3. Gemini API Wrapper ---
+        const apiKey = "AIzaSyD-A6h3fSU0CnWm9uO7kLeO9aZdXLhmzTs"; 
+        
+        async function fetchGeminiAPI(prompt, isJson = false, useSchema = null) {
+            const model = "gemini-1.5-flash";
+            const url = `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`;
+
+            const payload = { contents: [{ parts: [{ text: prompt }] }] };
+
+            if (isJson) {
+                payload.generationConfig = { responseMimeType: "application/json" };
+                if (useSchema) payload.generationConfig.responseSchema = useSchema;
+            }
+
+            let retries = 5;
+            let delays = [1000, 2000, 4000, 8000, 16000];
+
+            for (let i = 0; i < retries; i++) {
+                try {
+                    const response = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    const result = await response.json();
+                    return result.candidates[0].content.parts[0].text;
+                } catch (error) {
+                    if (i === retries - 1) throw error;
+                    await new Promise(res => setTimeout(res, delays[i]));
+                }
+            }
+        }
+
+        // --- 4. Chart.js (Radar) ---
+        function initRadarChart() {
+            const ctx = document.getElementById('balanceChart').getContext('2d');
+            const data = {
+                labels: ['Trabajo', 'Hogar', 'Cuidado Personal', 'Finanzas/Metas', 'Preocupación/Estrés'],
+                datasets: [{
+                    label: 'Situación Actual',
+                    data: [60, 50, 20, 30, 90],
+                    backgroundColor: 'rgba(214, 211, 209, 0.4)', borderColor: 'rgba(168, 162, 158, 1)', borderWidth: 2,
+                }, {
+                    label: 'Equilibrio Deseado',
+                    data: [70, 60, 80, 70, 20],
+                    backgroundColor: 'rgba(13, 148, 136, 0.2)', borderColor: 'rgba(13, 148, 136, 1)', borderWidth: 2,
+                }]
+            };
+            const config = { type: 'radar', data: data, options: { responsive: true, maintainAspectRatio: false, scales: { r: { ticks: { display: false, min: 0, max: 100 } } } } };
+            new Chart(ctx, config);
+        }
+
+        // --- 5. App Data & State ---
+        let completedTasks = 0;
+        const totalBlocksTarget = 3; 
+
+        const fearsData = [
+            { id: 1, fear: "¿Qué pasa si intento organizarme financieramente y fallo?", reality: "Buscar la perfección desde el inicio te bloquea. Dar un pequeño paso imperfecto (como revisar tus cuentas 10 minutos) es mucho más valioso que un plan perfecto que nunca inicias." }
+        ];
+
+        function renderFears() {
+            const container = document.getElementById('fears-container');
+            container.innerHTML = '';
+            fearsData.forEach(item => {
+                const html = `
+                    <div class="border border-stone-200 rounded-xl overflow-hidden bg-white shadow-sm">
+                        <button onclick="document.getElementById('fear-content-${item.id}').classList.toggle('hidden')" class="w-full text-left px-5 py-4 bg-stone-50 hover:bg-stone-100 flex justify-between focus:outline-none">
+                            <span class="font-medium text-stone-800">😨 ${item.fear}</span>
+                        </button>
+                        <div id="fear-content-${item.id}" class="hidden px-5 py-4 bg-white border-t border-stone-100 text-teal-800 text-sm">
+                            <strong>🛡️ Cambio de Perspectiva:</strong> <br> ${item.reality}
+                        </div>
+                    </div>`;
+                container.innerHTML += html;
+            });
+        }
+
+        // --- 6. API Integrations ---
+
+        async function generateFearReality() {
+            const inputEl = document.getElementById('new-fear-input');
+            const btn = document.getElementById('btn-reframe');
+            const text = inputEl.value.trim();
+            if (!text) return;
+            btn.disabled = true; btn.innerHTML = '✨ Analizando...';
+            const prompt = `Actúa como un coach comprensivo. El usuario está atascado por esta preocupación: "${text}". Ofrece un cambio de perspectiva en 2 frases cortas. Ayuda a separar su valor personal de los resultados y anímalo a que está bien cometer errores al aprender.`;
+            try {
+                const reality = await fetchGeminiAPI(prompt, false);
+                fearsData.unshift({ id: Date.now(), fear: text, reality: reality });
+                renderFears(); inputEl.value = '';
+            } finally { btn.disabled = false; btn.innerHTML = '✨ Desarmar Creencia'; }
+        }
+
+        async function generateMicroTasks() {
+            const inputEl = document.getElementById('new-goal-input');
+            const btn = document.getElementById('btn-microtasks');
+            const text = inputEl.value.trim();
+            if (!text) return;
+            btn.disabled = true; btn.innerHTML = '✨ Generando...';
+            const prompt = `El usuario necesita avanzar en: "${text}". Genera SOLO 3 pasos iniciales minúsculos que se puedan empezar y avanzar (aunque no se terminen) en los próximos 15 minutos. Devuelve un array JSON de strings simples.`;
+            try {
+                const response = await fetchGeminiAPI(prompt, true, { type: "ARRAY", items: { type: "STRING" } });
+                const tasks = JSON.parse(response);
+                const container = document.getElementById('task-list');
+                tasks.forEach((t, i) => {
+                    const id = Date.now() + i;
+                    container.innerHTML += `
+                        <label class="flex items-start gap-4 p-4 border border-stone-100 rounded-xl bg-white hover:bg-stone-50 cursor-pointer shadow-sm">
+                            <input type="checkbox" onchange="updateProgress(this)" class="mt-1 w-5 h-5 text-teal-600 rounded">
+                            <p class="text-stone-800 text-sm font-medium task-text">${t}</p>
+                        </label>`;
+                });
+                inputEl.value = '';
+            } finally { btn.disabled = false; btn.innerHTML = '✨ Sugerir primeros pasos'; }
+        }
+
+        function updateProgress(cb) {
+            const text = cb.nextElementSibling;
+            if(cb.checked) { completedTasks++; text.classList.add('line-through', 'text-stone-400'); }
+            else { completedTasks--; text.classList.remove('line-through', 'text-stone-400'); }
+            
+            const perc = Math.min(100, Math.round((completedTasks / totalBlocksTarget) * 100));
+            document.getElementById('progress-bar').style.width = perc + '%';
+            document.getElementById('progress-text').innerText = `${completedTasks}/${totalBlocksTarget}`;
+        }
+
+        async function sortBrainDump() {
+            const input = document.getElementById('braindump-input').value.trim();
+            if(!input) return;
+            document.getElementById('btn-braindump').innerHTML = '✨ Procesando...';
+            const prompt = `El usuario ha escrito todos sus pendientes desordenados: "${input}". Clasifícalos en un JSON: "hoy" (max 2 tareas pequeñas procesables en bloques de 15 min), "posponer" (lo que puede esperar), "soltar" (preocupaciones o cosas que no dependen de él). Estructura requerida: {"hoy":[], "posponer":[], "soltar":[]}`;
+            try {
+                const res = await fetchGeminiAPI(prompt, true, { type: "OBJECT", properties: { hoy: { type: "ARRAY", items: { type: "STRING" } }, posponer: { type: "ARRAY", items: { type: "STRING" } }, soltar: { type: "ARRAY", items: { type: "STRING" } } } });
+                const data = JSON.parse(res);
+                document.getElementById('list-do-today').innerHTML = data.hoy.map(i=>`<li>${i}</li>`).join('');
+                document.getElementById('list-postpone').innerHTML = data.posponer.map(i=>`<li>${i}</li>`).join('');
+                document.getElementById('list-letgo').innerHTML = data.soltar.map(i=>`<li>${i}</li>`).join('');
+                document.getElementById('braindump-results').classList.remove('hidden');
+            } finally { document.getElementById('btn-braindump').innerHTML = '✨ Organizar mis pensamientos'; }
+        }
+
+        async function generateSchedule() {
+            const text = document.getElementById('schedule-input').value.trim();
+            const btn = document.getElementById('btn-schedule');
+            if(!text) return;
+            btn.disabled = true; btn.innerHTML = '✨ Creando Rutina...';
+            
+            const prompt = `Crea un horario semanal que priorice el bienestar para evitar el agotamiento. Entrada del usuario: "${text}". 
+            Reglas:
+            1. Asigna tiempo para dormir y descansar (categoría 'sueño').
+            2. Asigna tiempo libre, hobbies y comidas (categoría 'juego').
+            3. Ubica las obligaciones laborales o fijas (categoría 'trabajo').
+            4. Deja espacios vacíos marcados como "Disponibles para bloques de enfoque" (categoría 'blanco') en los momentos sobrantes.
+            Devuelve un array JSON con objetos de bloques horarios: [{ "time": "08:00 - 10:00", "monday": {"task": "...", "cat": "..."}, "tuesday": ...hasta sunday... }]. Categorías permitidas: 'sueño', 'juego', 'trabajo', 'blanco'. Genera maximo 8 bloques por día.`;
+
+            try {
+                const res = await fetchGeminiAPI(prompt, true);
+                let rawText = res.replace(/```json|```/g, '').trim();
+                const data = JSON.parse(rawText);
+                
+                const getColorClass = (cat) => {
+                    if(cat === 'juego') return 'bg-purple-100 text-purple-800 border-l-4 border-purple-400 font-medium';
+                    if(cat === 'sueño') return 'bg-stone-100 text-stone-500';
+                    if(cat === 'trabajo') return 'bg-blue-50 text-blue-800 border-l-4 border-blue-400';
+                    return 'bg-white text-stone-400 border-2 border-dashed border-stone-200'; 
+                };
+
+                let gridHTML = '';
+                const days = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+                data.forEach(row => {
+                    gridHTML += `<div class="p-3 text-stone-500 text-xs font-medium border-t border-stone-200 bg-white flex items-center justify-center">${row.time}</div>`;
+                    days.forEach(day => {
+                        const cell = row[day];
+                        if (cell) {
+                            gridHTML += `<div class="p-2 border-t border-stone-200 bg-white"><div class="h-full rounded p-2 text-xs leading-tight ${getColorClass(cell.cat)} transition-transform hover:scale-105 cursor-default">${cell.task}</div></div>`;
+                        } else {
+                            gridHTML += `<div class="p-2 border-t border-stone-200 bg-white"><div class="h-full rounded bg-white border-2 border-dashed border-stone-200 text-transparent text-xs">.</div></div>`;
+                        }
+                    });
+                });
+                document.getElementById('calendar-grid').innerHTML = gridHTML;
+                document.getElementById('calendar-placeholder').classList.add('hidden');
+                document.getElementById('calendar-wrapper').classList.remove('hidden');
+            } catch(e) { alert("Error al generar la rutina."); console.error(e); }
+            finally { btn.disabled = false; btn.innerHTML = '✨ Generar Horario'; }
+        }
+
+        async function findHiddenVictories() {
+            const input = document.getElementById('victories-input').value.trim();
+            if(!input) return;
+            document.getElementById('btn-victories').innerHTML = '✨ Revelando...';
+            const prompt = `La usuaria relata su día sintiendo que no hizo mucho: "${input}". Demuéstrale que las acciones de autocuidado, el descanso o sobrellevar emociones difíciles también son avances positivos e importantes. Devuelve un array JSON de 3 frases alentadoras destacando estas "victorias".`;
+            try {
+                const res = await fetchGeminiAPI(prompt, true, { type: "ARRAY", items: { type: "STRING" } });
+                const data = JSON.parse(res);
+                document.getElementById('list-victories').innerHTML = data.map(i=>`<li class="bg-white p-3 rounded-xl border border-indigo-100 text-indigo-900 text-sm shadow-sm">🌟 ${i}</li>`).join('');
+                document.getElementById('victories-results').classList.remove('hidden');
+                document.getElementById('victories-input').value = '';
+            } finally { document.getElementById('btn-victories').innerHTML = '✨ Revelar mis logros de hoy'; }
+        }
+
+        async function negotiateDistraction() {
+            const input = document.getElementById('negotiator-input').value.trim();
+            if(!input) return;
+            document.getElementById('btn-negotiator').innerHTML = '✨ Buscando...';
+            const prompt = `La usuaria está evadiendo responsabilidades porque siente: "${input}". Valida sus sentimientos empáticamente y ofrécele una actividad alternativa de 5 a 10 minutos (que no involucre redes sociales) que le ayude a calmar su mente de forma sana. Máximo 2 oraciones.`;
+            try {
+                const res = await fetchGeminiAPI(prompt, false);
+                document.getElementById('negotiator-result').innerHTML = `<strong>Una alternativa amable:</strong> <br> ${res}`;
+                document.getElementById('negotiator-result').classList.remove('hidden');
+                document.getElementById('negotiator-input').value = '';
+            } finally { document.getElementById('btn-negotiator').innerHTML = '✨ Buscar alternativa'; }
+        }
+
+        async function visualizeSuccess() {
+            const input = document.getElementById('success-input').value.trim();
+            const btn = document.getElementById('btn-success');
+            const resultEl = document.getElementById('success-result');
+            
+            if(!input) return;
+            
+            btn.disabled = true;
+            btn.innerHTML = '✨ Visualizando...';
+            resultEl.classList.add('hidden');
+
+            const prompt = `La usuaria tiene ansiedad de dar este paso: "${input}". En lugar de dejarla pensar en el peor escenario, descríbele el MEJOR escenario posible. Escribe un párrafo muy vívido, positivo, compasivo y emocionante (máximo 3 oraciones) describiendo la sensación de alivio y orgullo que sentirá justo después de haberlo completado con éxito.`;
+
+            try {
+                const res = await fetchGeminiAPI(prompt, false);
+                resultEl.innerHTML = `<strong>El mejor escenario:</strong><br><br>${res}`;
+                resultEl.classList.remove('hidden');
+                document.getElementById('success-input').value = '';
+            } catch(error) {
+                console.error("Error visualizing:", error);
+                alert("Error al conectar. Imagina por un segundo: ¿y si sale mejor de lo que esperas?");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✨ Visualizar el Éxito';
+            }
+        }
+
+        async function makeQuickDecision() {
+            const input = document.getElementById('decider-input').value.trim();
+            const btn = document.getElementById('btn-decider');
+            const resultEl = document.getElementById('decider-result');
+            
+            if(!input) return;
+            
+            btn.disabled = true;
+            btn.innerHTML = '✨ Decidiendo...';
+            resultEl.classList.add('hidden');
+
+            const prompt = `La usuaria tiene "fatiga de decisión" y parálisis por análisis. No sabe por cuál de estas tareas empezar: "${input}". 
+            Elige UNA sola tarea por ella de manera asertiva y amigable. Dale una razón brevísima (1 línea) de por qué empezar por ahí le dará inercia positiva. 
+            Responde directo, ejemplo: "Empieza por [Tarea]. [Razón]."`;
+
+            try {
+                const res = await fetchGeminiAPI(prompt, false);
+                resultEl.innerHTML = `💡 <strong>La IA ha decidido:</strong> ${res}`;
+                resultEl.classList.remove('hidden');
+                document.getElementById('decider-input').value = '';
+            } catch(error) {
+                console.error("Error deciding:", error);
+                alert("Error al decidir. Ante la duda, ¡elige la tarea que tome menos de 5 minutos!");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✨ Elige por mí';
+            }
+        }
+
+        async function playSOSAudio() {
+            const btn = document.getElementById('btn-sos-audio');
+            btn.disabled = true; 
+            btn.innerHTML = 'Generando...';
+            
+            const text = "Hola. Tómate un momento para respirar profundo. Recuerda que está bien no poder con todo a la vez. Tienes permiso para descansar y retomar las cosas a tu ritmo. Tu bienestar es lo más importante ahora mismo. Estoy aquí apoyándote.";
+            
+            // Hemos cambiado la API de Google (que da error 404) por la API nativa de voz de tu navegador.
+            if ('speechSynthesis' in window) {
+                // Cancelamos cualquier audio previo que esté sonando
+                window.speechSynthesis.cancel();
+                
+                const utterance = new SpeechSynthesisUtterance(text);
+                utterance.lang = 'es-ES'; // Español
+                utterance.rate = 0.85; // Velocidad un poco más lenta y calmada
+                utterance.pitch = 1;
+                
+                utterance.onend = () => {
+                    btn.disabled = false; 
+                    btn.innerHTML = '<span>🎙️</span> Escuchar de nuevo';
+                };
+                
+                window.speechSynthesis.speak(utterance);
+            } else {
+                alert("Tu navegador no soporta la reproducción de voz. Pero lee esto lentamente: " + text);
+                btn.disabled = false; 
+                btn.innerHTML = '<span>🎙️</span> Escuchar de nuevo';
+            }
+        }
+
+        async function analyzeEnergy() {
+            const inputEl = document.getElementById('daily-energy-input');
+            const btn = document.getElementById('btn-energy');
+            const text = inputEl.value.trim();
+            if(!text) return;
+
+            btn.disabled = true;
+            btn.innerHTML = '✨ Analizando...';
+
+            const prompt = `Analiza este reporte del día de la usuaria: "${text}". Estima la distribución de su energía en 5 áreas y devuelve UNICAMENTE un array JSON con 5 números (0-100). Orden estricto: [Trabajo, Hogar, Cuidado Personal, Finanzas/Metas, Preocupación/Estrés]. Ej: [80, 10, 5, 0, 90]. Solo el array JSON.`;
+
+            try {
+                const responseText = await fetchGeminiAPI(prompt, false); 
+                const cleanedText = responseText.replace(/```json|```/g, '').trim();
+                const newData = JSON.parse(cleanedText);
+
+                if (Array.isArray(newData) && newData.length === 5) {
+                    const chart = Chart.getChart('balanceChart'); 
+                    if (chart) {
+                        chart.data.datasets[0].data = newData.map(Number);
+                        chart.update();
+                    }
+                }
+            } catch (error) {
+                console.error("Error analizando energía:", error);
+                alert("Hubo un error al actualizar los datos. Intenta de nuevo.");
+            } finally {
+                btn.disabled = false;
+                btn.innerHTML = '✨ Actualizar mi Gráfico';
+                inputEl.value = '';
+            }
+        }
+
+        // Initialize App
+        document.addEventListener('DOMContentLoaded', () => {
+            renderFears();
+        });
+    </script>
+</body>
+</html>
